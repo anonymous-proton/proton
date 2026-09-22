@@ -1,0 +1,59 @@
+component: diffdock
+dispatch_contract_ref: nextflow/modules/diffdock.nf:RUN_DIFFDOCK
+main_script_signature: inference
+common_axis_map:
+  input_batch_size: batch_size
+  output_sample_count: samples_per_complex
+override_schema:
+  optional:
+    - steps
+    - batch_size
+    - samples_per_complex
+    - dataset
+    - scaffold
+    - ligand
+cell_schema_version: 1
+cell_axis_subset:
+  - sample_id
+  - input_batch_size
+  - output_sample_count
+  - target_gpu_id
+  - steps
+  - batch_size
+  - samples_per_complex
+  - dataset
+modeling:
+  feature_schema:
+    - target_gpu_id
+    - steps
+    - batch_size
+    - samples_per_complex
+    - dataset
+  workload_feature_keys: []
+defaults:
+  steps: 20
+command:
+  argv:
+    - micromamba
+    - run
+    - -n
+    - diffdock
+    - python3
+    - -m
+    - inference
+    - --protein_path
+    - '{protein_path}'
+    - --ligand_description
+    - '{ligand_path}'
+    - --out_dir
+    - '{out_dir}'
+    - --complex_name
+    - results
+    - --batch_size
+    - '{batch_size}'
+    - --samples_per_complex
+    - '{samples_per_complex}'
+    - --inference_steps
+    - '{steps}'
+    - --actual_steps
+    - '{steps}'

@@ -1,0 +1,48 @@
+component: protenix
+dispatch_contract_ref: nextflow/modules/protenix.nf:RUN_PROTENIX
+main_script_signature: inference_demo.sh
+common_axis_map:
+  input_batch_size: batch_size
+  output_sample_count: num_samples
+override_schema:
+  optional:
+    - step
+    - cycle
+    - num_samples
+    - dataset
+    - scaffold
+    - ligand
+cell_schema_version: 1
+cell_axis_subset:
+  - sample_id
+  - input_batch_size
+  - output_sample_count
+  - target_gpu_id
+  - step
+  - cycle
+  - dataset
+modeling:
+  feature_schema:
+    - target_gpu_id
+    - step
+    - cycle
+    - dataset
+  workload_feature_keys: []
+defaults:
+  step: 200
+  cycle: 4
+command:
+  argv:
+    - /workspace/third_parties/Protenix/inference.sh
+    - --input_json_path
+    - '{input_json_path}'
+    - --dump_dir
+    - '{dump_dir}'
+    - --seed
+    - '101'
+    - --N_sample
+    - '{num_samples}'
+    - --N_step
+    - '{step}'
+    - --N_cycle
+    - '{cycle}'

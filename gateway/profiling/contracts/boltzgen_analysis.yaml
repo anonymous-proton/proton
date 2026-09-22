@@ -1,0 +1,23 @@
+component: boltzgen_analysis
+dispatch_contract_ref: nextflow/modules/boltzgen_step.nf:RUN_BOLTZGEN_STEP
+main_script_signature: boltzgen
+common_axis_map: {}
+override_schema:
+  optional:
+    - protocol
+    - dataset
+    - scaffold
+    - ligand
+defaults:
+  protocol: protein-anything
+command:
+  argv:
+    - boltzgen
+    - run
+    - '{input_yaml}'
+    - --output
+    - '{output_dir}'
+    - --protocol
+    - '{protocol}'
+    - --steps
+    - analysis

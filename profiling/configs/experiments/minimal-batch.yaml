@@ -1,0 +1,49 @@
+experiments:
+
+  diffdock:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1, 2, 4, 8, 12, 16, 20, 24, 28, 32]
+    output_sample_count: [1]
+
+  vina_gpu:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1, 2, 4, 8, 12, 16, 20, 24, 28, 32]
+    output_sample_count: [1]
+
+  proteinmpnn:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1, 2, 4, 8, 12, 16, 20, 24, 28, 32]
+    output_sample_count: [1]
+
+  esm:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1, 2, 4, 8, 12, 16, 20, 24, 28, 32]
+    output_sample_count: [1]
+
+  esmfold:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1, 2, 4, 8, 12, 16, 20, 24, 28, 32]
+    output_sample_count: [1]
+
+  protenix:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1, 2, 4, 8, 16, 32]
+    output_sample_count: [1]
+
+  alphafold3:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1, 2, 4, 8, 12, 16, 20, 24, 28, 32]
+    output_sample_count: [1]
+
+  mmseqs2:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1, 2, 4, 8, 12, 16, 20, 24, 28, 32]
+    output_sample_count: [1]

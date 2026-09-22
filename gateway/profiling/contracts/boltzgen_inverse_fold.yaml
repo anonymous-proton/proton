@@ -1,0 +1,28 @@
+component: boltzgen_inverse_fold
+dispatch_contract_ref: nextflow/modules/boltzgen_inverse_fold.nf:RUN_BOLTZGEN_INVERSE_FOLD
+main_script_signature: boltzgen
+common_axis_map:
+  output_sample_count: num_seq_per_target
+override_schema:
+  optional:
+    - budget
+    - protocol
+    - dataset
+    - scaffold
+    - ligand
+defaults:
+  budget: 30
+  protocol: protein-anything
+command:
+  argv:
+    - boltzgen
+    - run
+    - '{input_yaml}'
+    - --output
+    - '{output_dir}'
+    - --protocol
+    - '{protocol}'
+    - --steps
+    - inverse_folding
+    - --budget
+    - '{budget}'

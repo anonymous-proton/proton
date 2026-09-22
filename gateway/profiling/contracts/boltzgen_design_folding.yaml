@@ -1,0 +1,30 @@
+component: boltzgen_design_folding
+dispatch_contract_ref: nextflow/modules/boltzgen_step.nf:RUN_BOLTZGEN_STEP
+main_script_signature: boltzgen
+common_axis_map:
+  output_sample_count: num_designs
+override_schema:
+  optional:
+    - sampling_steps
+    - recycling_steps
+    - protocol
+    - dataset
+    - scaffold
+    - ligand
+defaults:
+  sampling_steps: 200
+  recycling_steps: 3
+  protocol: protein-anything
+command:
+  argv:
+    - boltzgen
+    - run
+    - '{input_yaml}'
+    - --output
+    - '{output_dir}'
+    - --protocol
+    - '{protocol}'
+    - --steps
+    - design_folding
+    - --num_designs
+    - '{num_designs}'

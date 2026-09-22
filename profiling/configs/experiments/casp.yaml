@@ -1,0 +1,50 @@
+experiments:
+  rfdiffusion:
+    sample_id: [T1127_15, T1118_5, T1188_29, H1171_27, T1152_43, T1181_92, T1187_43, T1158v1_25]
+    quality: [low, medium, high]
+    input_batch_size: [1, 8, 16, 24, 32]
+    output_sample_count: [1, 8, 16, 24, 32]
+
+  diffdock:
+    sample_id: [T1127_15, T1118_5, T1188_29, H1171_27, T1152_43, T1181_92, T1187_43, T1158v1_25]
+    quality: [low, medium, high]
+    input_batch_size: [1, 8, 16, 24, 32]
+    output_sample_count: [1, 8, 16, 24, 32]
+
+
+  vina_gpu:
+    sample_id: [T1127_15, T1118_5, T1188_29, H1171_27, T1152_43, T1181_92, T1187_43, T1158v1_25]
+    quality: [low, medium, high]
+    input_batch_size: [1, 8, 16, 24, 32]
+    output_sample_count: [1, 8, 16, 24, 32]
+
+  proteinmpnn:
+    sample_id: [T1127_15, T1118_5, T1188_29, H1171_27, T1152_43, T1181_92, T1187_43, T1158v1_25]
+    quality: [medium]
+    input_batch_size: [1, 8, 16, 24, 32]
+    output_sample_count: [1, 8, 16, 24, 32]
+
+
+  esmfold:
+    sample_id: [T1127_15, T1118_5, T1188_29, H1171_27, T1152_43, T1181_92, T1187_43, T1158v1_25]
+    quality: [low, medium, high]
+    input_batch_size: [1, 8, 16, 24, 32]
+    output_sample_count: [1, 8, 16, 24, 32]
+
+  protenix:
+    sample_id: [T1127_15, T1118_5, T1188_29, H1171_27, T1152_43, T1181_92, T1187_43, T1158v1_25]
+    quality: [low, medium, high]
+    input_batch_size: [1, 8, 16, 24, 32]
+    output_sample_count: [1, 8, 16, 24, 32]
+
+  alphafold3:
+    sample_id: [T1127_15, T1118_5, T1188_29, H1171_27, T1152_43, T1181_92, T1187_43, T1158v1_25]
+    quality: [low, medium, high]
+    input_batch_size: [1, 8, 16, 24, 32]
+    output_sample_count: [1, 8, 16, 24, 32]
+
+  mmseqs2:
+    sample_id: [T1127_15, T1118_5, T1188_29, H1171_27, T1152_43, T1181_92, T1187_43, T1158v1_25]
+    quality: [medium, high]
+    input_batch_size: [1, 8, 16, 24, 32]
+    output_sample_count: [1, 8, 16, 24, 32]

@@ -1,0 +1,6 @@
+experiments:
+  protenix:
+    sample_id: [1shg_3dx1]
+    quality: [low, medium, high]
+    input_batch_size: [1]
+    output_sample_count: [1]

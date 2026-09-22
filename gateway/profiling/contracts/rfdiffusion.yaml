@@ -1,0 +1,52 @@
+component: rfdiffusion
+dispatch_contract_ref: nextflow/modules/rfdiffusion.nf:RUN_RFDIFFUSION
+main_script_signature: scripts/run_inference_pt2.py
+common_axis_map:
+  input_batch_size: batch_size
+  output_sample_count: num_designs
+override_schema:
+  optional:
+    - step
+    - with_overhead
+    - dataset
+    - scaffold
+    - ligand
+    - contig
+cell_schema_version: 1
+cell_axis_subset:
+  - sample_id
+  - input_batch_size
+  - output_sample_count
+  - target_gpu_id
+  - step
+  - with_overhead
+  - contig
+  - dataset
+modeling:
+  feature_schema:
+    - target_gpu_id
+    - step
+    - with_overhead
+    - contig
+    - dataset
+  workload_feature_keys: []
+defaults:
+  step: 50
+  with_overhead: false
+command:
+  argv:
+    - python3.9
+    - /workspace/third_parties/RFdiffusion/scripts/run_inference_pt2.py
+    - inference.output_prefix={output_prefix}
+    - inference.model_directory_path={model_dir}
+    - inference.input_pdb={input_pdb}
+    - inference.cautious=false
+    - inference.profile={with_overhead}
+    - inference.batch_size={num_designs}
+    - inference.fix_contig_length_across_batch=true
+    - inference.num_designs={num_designs}
+    - contigmap.contigs={actual_contig}
+    - potentials.guide_scale=1
+    - potentials.guiding_potentials=["type:substrate_contacts,weight:3,s:1,r_0:8,rep_r_0:5,rep_s:2,rep_r_min:1"]
+    - potentials.substrate=LIG
+    - diffuser.T={step}

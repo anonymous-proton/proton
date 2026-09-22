@@ -1,0 +1,3 @@
+FROM fovus/vina-gpu-2.1:autodock-vina-gpu
+
+COPY .kernels-staging/ /vina/AutoDock-Vina-GPU-2.1/

@@ -1,0 +1,327 @@
+shared:
+  cold_init_latency_sec: 10.0
+  cold_inference_latency_sec: 30.0
+  self_interference_prior: 1.0
+  workers:
+    shm_size: 64g
+    grpc_port: 0
+    gpu_count: 1
+    vram_violation_threshold: 5
+    grace_period_s: 0
+    worker_server:
+      prepare_concurrency: 2
+      execute_concurrency: 0
+      execute_processes: 0
+      cuda_mps: true
+      finalize_concurrency: 2
+      log_level: INFO
+    volumes:
+      - .:/workspace
+      - nextflow/work:nextflow/work
+      - nextflow/work_concurrent:nextflow/work_concurrent
+      - /mnt/nfs/new:/mnt/nfs/new
+      - /mnt/ssd/proton:/mnt/ssd/proton
+      - /mnt/ssd/colabfold_db:/mnt/ssd/colabfold_db
+      - /mnt/ssd/torch_extensions_cache:/mnt/ssd/torch_extensions_cache
+    command: python -m modelworker.worker_server
+  components:
+    rfdiffusion:
+      image: rfdiffusion:worker
+      adapter: RFdiffusion.rfdiffusion_adapter:RFDiffusionAdapter
+      workload:
+        input_size_key: scaffold_length
+        config_args:
+          model_dir: "inference.model_directory_path"
+          batch_size: "inference.batch_size"
+        fan_out_args:
+          output_sample_count: "inference.num_designs"
+      env:
+        PYTHONPATH: /workspace
+        RFDIFFUSION_MODEL_DIR: /mnt/ssd/proton/rfdiffusion/models
+        RFDIFFUSION_BASE_CONFIG: >-
+          /workspace/third_parties/RFdiffusion/config/inference/base.yaml
+    protenix:
+      image: protenix:worker
+      adapter: Protenix.protenix_adapter:ProtenixAdapter
+      priority: 200
+      shm_size: 8g
+      workload:
+        input_size_key: num_residues
+        config_args:
+          N_cycle: "--N_cycle"
+        fan_out_args:
+          output_sample_count: "--N_sample"
+      env:
+        PROTENIX_MODEL_DIR: /mnt/ssd/proton/protenix/models
+        PROTENIX_CACHE_DIR: /mnt/ssd/proton/protenix/models/ccd_cache
+        PROTENIX_DATA_ROOT_DIR: >-
+          /mnt/ssd/proton/protenix/models/ccd_cache
+        PROTENIX_INFERENCE_NUM_WORKERS: "0"
+        PYTORCH_CUDA_ALLOC_CONF: expandable_segments:True
+        LAYERNORM_TYPE: fast_layernorm
+        USE_DEEPSPEED_EVO_ATTENTION: "true"
+    alphafold3:
+      image: alphafold3:worker
+      adapter: alphafold3.alphafold3_adapter:AlphaFold3Adapter
+      priority: 200
+      shm_size: 8g
+      worker_server:
+        execute_processes: -1
+        cuda_mps: false
+      workload:
+        input_size_key: num_residues
+        config_args:
+          model_dir: "$ALPHAFOLD3_MODEL_DIR"
+          num_recycles: "--num_recycles"
+          num_diffusion_steps: "--num_diffusion_steps"
+          flash_attention: "--flash_attention_implementation"
+        fan_out_args:
+          output_sample_count: "--num_diffusion_samples"
+      env:
+        PYTHONPATH: /workspace
+        ALPHAFOLD3_MODEL_DIR: /mnt/ssd/proton/alphafold3/models
+        ALPHAFOLD3_FLASH_ATTENTION_IMPLEMENTATION: triton
+        ALPHAFOLD3_NUM_RECYCLES: "10"
+        ALPHAFOLD3_NUM_DIFFUSION_SAMPLES: "1"
+        ALPHAFOLD3_NUM_DIFFUSION_STEPS: "200"
+        XLA_FLAGS: --xla_gpu_enable_triton_gemm=false
+        XLA_PYTHON_CLIENT_PREALLOCATE: "true"
+        XLA_CLIENT_MEM_FRACTION: "0.95"
+    proteinmpnn:
+      image: proteinmpnn:worker
+      adapter: ProteinMPNN.proteinmpnn_adapter:ProteinMPNNAdapter
+      workload:
+        input_size_key: num_residues
+        config_args:
+          model_name: "$PROTEINMPNN_MODEL_NAME"
+          batch_size: "--batch_size"
+        fan_out_args:
+          output_sample_count: "--num_seq_per_target"
+      env:
+        PROTEINMPNN_MODEL_DIR: /mnt/ssd/proton/proteinmpnn/models
+        PROTEINMPNN_MODEL_NAME: v_48_030
+        PROTEINMPNN_CA_ONLY: false
+        PROTEINMPNN_USE_SOLUBLE: false
+    diffdock:
+      image: diffdock:worker
+      adapter: DiffDock.diffdock_adapter:DiffDockAdapter
+      command: micromamba run -n diffdock python -m modelworker.worker_server
+      env:
+        DIFFDOCK_MODEL_NAME: diffdock_adapter_v0
+        DIFFDOCK_MODEL_DIR: >-
+          /mnt/nfs/new/proton/diffdock/models/v1.1/score_model
+        DIFFDOCK_CONFIDENCE_DIR: >-
+          /mnt/nfs/new/proton/diffdock/models/v1.1/confidence_model
+        DIFFDOCK_INFERENCE_CONFIG: >-
+          /workspace/third_parties/DiffDock/default_inference_args.yaml
+        DIFFDOCK_CACHE_DIR: /mnt/nfs/new/proton/diffdock/cache
+        TORCH_EXTENSIONS_DIR: /mnt/ssd/proton/cache/torch_extensions
+        TORCH_HOME: /mnt/ssd/proton/cache/torch
+        HF_HOME: /mnt/ssd/proton/cache/hf
+        TRITON_CACHE_DIR: /mnt/ssd/torch_extensions_cache
+    esm:
+      image: protenix:worker
+      adapter: ESM.esm_adapter:ESMAdapter
+      workload:
+        input_size_key: sequence_length
+        length_args:
+          sequence_length: "--ref_sequence"
+        config_args:
+          model_name: "$ESM_MODEL_NAME"
+          batch_size: "--batch_size"
+        fan_out_args:
+          output_sample_count: "--num_variants"
+      env:
+        ESM_MODEL_NAME: facebook/esm2_t33_650M_UR50D
+        TORCH_EXTENSIONS_DIR: /mnt/ssd/proton/cache/torch_extensions
+        TORCH_HOME: /mnt/ssd/proton/cache/torch
+        HF_HOME: /mnt/ssd/proton/cache/hf
+        TRITON_CACHE_DIR: /mnt/ssd/torch_extensions_cache
+        PYTORCH_CUDA_ALLOC_CONF: expandable_segments:True
+    mmseqs2:
+      image: colabfold:worker
+      adapter: Colabfold.mmseqs2_adapter:MMSeqs2Adapter
+      dynamic_batching:
+        enabled: false
+        batch_size_arg: --batch-size
+      worker_server:
+        item_concurrency: 4
+        execute_processes: -1
+        cuda_mps: false
+      workload:
+        input_size_key: sequence_length
+        length_args:
+          sequence_length: "--sequence"
+        config_args:
+          threads: "--threads"
+      env:
+        MMSEQS_DB_DIR: /mnt/ssd/colabfold_db
+        MMSEQS_BIN: /usr/local/bin/mmseqs
+    vina_gpu:
+      image: autodock_vina_gpu:sm_86
+      adapter: vinaGPU.vina_gpu_adapter:VinaGPUAdapter
+      command: python3 -m modelworker.worker_server
+      shm_size: 8g
+      priority: 50
+      worker_server:
+        execute_processes: -1
+        cuda_mps: false
+      workload:
+        input_size_key: receptor_atoms
+        config_args:
+          thread: "--thread"
+      env:
+        VINA_GPU_BINARY: /vina/AutoDock-Vina-GPU-2.1/AutoDock-Vina-GPU-2-1
+        PYTHONPATH: /workspace
+    boltzgen_design:
+      image: boltzgen:worker
+      adapter: boltzgen.boltzgen_adapter:BoltzGenDesignAdapter
+      shm_size: 8g
+      workload:
+        fan_out_args:
+          output_sample_count: "--num_designs"
+      env:
+        BOLTZGEN_DESIGN_CHECKPOINT: "/mnt/ssd/proton/cache/hf/\
+          models--boltzgen--boltzgen-1/snapshots/\
+          upstream/\
+          boltzgen1_diverse.ckpt"
+        PYTHONPATH: /workspace
+        HF_HOME: /mnt/ssd/proton/cache/hf
+        TORCH_HOME: /mnt/ssd/proton/cache/torch
+        BOLTZGEN_CONFIG_DIR: >-
+          /workspace/third_parties/boltzgen/src/boltzgen/resources/config
+        BOLTZGEN_MOLDIR: "/mnt/ssd/proton/cache/hf/\
+          datasets--boltzgen--inference-data/snapshots/\
+          upstream/\
+          mols.zip"
+    boltzgen_inverse_fold:
+      image: boltzgen:worker
+      adapter: boltzgen.boltzgen_adapter:BoltzGenInverseFoldAdapter
+      shm_size: 8g
+      workload:
+        fan_out_args:
+          output_sample_count: "--inverse_fold_num_sequences"
+      env:
+        BOLTZGEN_IFOLD_CHECKPOINT: "/mnt/ssd/proton/cache/hf/\
+          models--boltzgen--boltzgen-1/snapshots/\
+          upstream/\
+          boltzgen1_ifold.ckpt"
+        PYTHONPATH: /workspace
+        HF_HOME: /mnt/ssd/proton/cache/hf
+        TORCH_HOME: /mnt/ssd/proton/cache/torch
+        BOLTZGEN_CONFIG_DIR: >-
+          /workspace/third_parties/boltzgen/src/boltzgen/resources/config
+        BOLTZGEN_MOLDIR: "/mnt/ssd/proton/cache/hf/\
+          datasets--boltzgen--inference-data/snapshots/\
+          upstream/\
+          mols.zip"
+    boltzgen_folding:
+      image: boltzgen:worker
+      adapter: boltzgen.boltzgen_adapter:BoltzGenFoldingAdapter
+      shm_size: 8g
+      env:
+        BOLTZGEN_FOLDING_CHECKPOINT: "/mnt/ssd/proton/cache/hf/\
+          models--boltzgen--boltzgen-1/snapshots/\
+          upstream/\
+          boltz2_conf_final.ckpt"
+        PYTHONPATH: /workspace
+        HF_HOME: /mnt/ssd/proton/cache/hf
+        TORCH_HOME: /mnt/ssd/proton/cache/torch
+        BOLTZGEN_CONFIG_DIR: >-
+          /workspace/third_parties/boltzgen/src/boltzgen/resources/config
+        BOLTZGEN_MOLDIR: "/mnt/ssd/proton/cache/hf/\
+          datasets--boltzgen--inference-data/snapshots/\
+          upstream/\
+          mols.zip"
+    boltzgen_design_folding:
+      image: boltzgen:worker
+      adapter: boltzgen.boltzgen_adapter:BoltzGenDesignFoldingAdapter
+      shm_size: 8g
+      env:
+        BOLTZGEN_FOLDING_CHECKPOINT: "/mnt/ssd/proton/cache/hf/\
+          models--boltzgen--boltzgen-1/snapshots/\
+          upstream/\
+          boltz2_conf_final.ckpt"
+        PYTHONPATH: /workspace
+        HF_HOME: /mnt/ssd/proton/cache/hf
+        TORCH_HOME: /mnt/ssd/proton/cache/torch
+        BOLTZGEN_CONFIG_DIR: >-
+          /workspace/third_parties/boltzgen/src/boltzgen/resources/config
+        BOLTZGEN_MOLDIR: "/mnt/ssd/proton/cache/hf/\
+          datasets--boltzgen--inference-data/snapshots/\
+          upstream/\
+          mols.zip"
+    boltzgen_affinity:
+      image: boltzgen:worker
+      adapter: boltzgen.boltzgen_adapter:BoltzGenAffinityAdapter
+      shm_size: 8g
+      env:
+        BOLTZGEN_AFFINITY_CHECKPOINT: "/mnt/ssd/proton/cache/hf/\
+          models--boltzgen--boltzgen-1/snapshots/\
+          upstream/\
+          boltz2_aff.ckpt"
+        PYTHONPATH: /workspace
+        HF_HOME: /mnt/ssd/proton/cache/hf
+        TORCH_HOME: /mnt/ssd/proton/cache/torch
+        BOLTZGEN_CONFIG_DIR: >-
+          /workspace/third_parties/boltzgen/src/boltzgen/resources/config
+        BOLTZGEN_MOLDIR: "/mnt/ssd/proton/cache/hf/\
+          datasets--boltzgen--inference-data/snapshots/\
+          upstream/\
+          mols.zip"
+    boltzgen_analysis:
+      image: boltzgen:worker
+      adapter: boltzgen.boltzgen_adapter:BoltzGenAnalysisAdapter
+      shm_size: 8g
+      env:
+        BOLTZGEN_FOLDING_CHECKPOINT: "/mnt/ssd/proton/cache/hf/\
+          models--boltzgen--boltzgen-1/snapshots/\
+          upstream/\
+          boltz2_conf_final.ckpt"
+        BOLTZGEN_DESIGN_CHECKPOINT: "/mnt/ssd/proton/cache/hf/\
+          models--boltzgen--boltzgen-1/snapshots/\
+          upstream/\
+          boltzgen1_diverse.ckpt"
+        PYTHONPATH: /workspace
+        HF_HOME: /mnt/ssd/proton/cache/hf
+        TORCH_HOME: /mnt/ssd/proton/cache/torch
+        BOLTZGEN_CONFIG_DIR: >-
+          /workspace/third_parties/boltzgen/src/boltzgen/resources/config
+        BOLTZGEN_MOLDIR: "/mnt/ssd/proton/cache/hf/\
+          datasets--boltzgen--inference-data/snapshots/\
+          upstream/\
+          mols.zip"
+    boltzgen_filtering:
+      image: boltzgen:worker
+      adapter: boltzgen.boltzgen_adapter:BoltzGenFilteringAdapter
+      shm_size: 8g
+      env:
+        BOLTZGEN_FOLDING_CHECKPOINT: "/mnt/ssd/proton/cache/hf/\
+          models--boltzgen--boltzgen-1/snapshots/\
+          upstream/\
+          boltz2_conf_final.ckpt"
+        PYTHONPATH: /workspace
+        HF_HOME: /mnt/ssd/proton/cache/hf
+        TORCH_HOME: /mnt/ssd/proton/cache/torch
+        BOLTZGEN_CONFIG_DIR: >-
+          /workspace/third_parties/boltzgen/src/boltzgen/resources/config
+        BOLTZGEN_MOLDIR: "/mnt/ssd/proton/cache/hf/\
+          datasets--boltzgen--inference-data/snapshots/\
+          upstream/\
+          mols.zip"
+workers:
+  - component: rfdiffusion
+  - component: protenix
+  - component: alphafold3
+  - component: proteinmpnn
+  - component: diffdock
+  - component: esm
+  - component: mmseqs2
+  - component: vina_gpu
+  - component: boltzgen_design
+  - component: boltzgen_inverse_fold
+  - component: boltzgen_folding
+  - component: boltzgen_design_folding
+  - component: boltzgen_affinity
+  - component: boltzgen_analysis
+  - component: boltzgen_filtering

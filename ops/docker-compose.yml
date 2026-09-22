@@ -1,0 +1,41 @@
+services:
+
+  ops-api:
+    build:
+      context: ./ops-api
+    restart: unless-stopped
+    network_mode: host
+    command: uvicorn app.main:app --host 0.0.0.0 --port ${OPS_API_PORT:-18098}
+    environment:
+      GATEWAY_BASE_URL: ${GATEWAY_BASE_URL:-http://127.0.0.7:8098}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-2}
+      SNAPSHOT_TTL_SECONDS: ${SNAPSHOT_TTL_SECONDS:-5}
+      GATEWAY_TIMEOUT_SECONDS: ${GATEWAY_TIMEOUT_SECONDS:-30}
+      OPS_API_PORT: ${OPS_API_PORT:-18098}
+    volumes:
+      - ../:/workspace:ro
+
+  ops-console:
+    build:
+      context: ./ops-console
+    restart: unless-stopped
+    command: sh -c "rm -rf /dist/* && cp -r /app/dist/* /dist/ && tail -f /dev/null"
+    volumes:
+      - ops_console_dist:/dist
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - ops-api
+      - ops-console
+    network_mode: host
+    environment:
+      CONSOLE_PORT: ${CONSOLE_PORT:-8088}
+      OPS_API_PORT: ${OPS_API_PORT:-18098}
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ops_console_dist:/usr/share/nginx/html:ro
+
+volumes:
+  ops_console_dist:

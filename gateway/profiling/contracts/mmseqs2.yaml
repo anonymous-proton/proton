@@ -1,0 +1,51 @@
+component: mmseqs2
+dispatch_contract_ref: nextflow/modules/mmseqs2.nf:RUN_MMSEQS2
+main_script_signature: colabfold_search
+override_schema:
+  optional:
+    - db1
+    - num_iterations
+    - db_base
+    - dataset
+    - scaffold
+    - ligand
+cell_schema_version: 1
+cell_axis_subset:
+  - sample_id
+  - input_batch_size
+  - output_sample_count
+  - target_gpu_id
+  - db1
+  - num_iterations
+  - db_base
+  - dataset
+modeling:
+  feature_schema:
+    - target_gpu_id
+    - db1
+    - num_iterations
+    - db_base
+    - dataset
+  workload_feature_keys: []
+defaults:
+  db1: uniref30_2302_db
+  num_iterations: 3
+  db_base: /mnt/ssd/colabfold_db
+command:
+  argv:
+    - colabfold_search
+    - "{fasta_path}"
+    - "{db_base}"
+    - "{output_dir}"
+    - --db1
+    - "{db1}"
+    - --num-iterations
+    - "{num_iterations}"
+    - --db-load-mode
+    - "2"
+    - --prefilter-mode
+    - "1"
+    - --gpu
+    - "1"
+    - --use-env
+    - "0"

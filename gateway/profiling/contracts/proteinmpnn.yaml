@@ -1,0 +1,46 @@
+component: proteinmpnn
+dispatch_contract_ref: nextflow/modules/proteinmpnn.nf:RUN_PROTEINMPNN
+main_script_signature: protein_mpnn_run.py
+common_axis_map:
+  input_batch_size: batch_size
+  output_sample_count: num_seq_per_target
+override_schema:
+  optional:
+    - sampling_temp
+    - batch_size
+    - num_seq_per_target
+    - dataset
+    - scaffold
+    - ligand
+cell_schema_version: 1
+cell_axis_subset:
+  - sample_id
+  - input_batch_size
+  - output_sample_count
+  - target_gpu_id
+  - sampling_temp
+  - dataset
+modeling:
+  feature_schema:
+    - target_gpu_id
+    - sampling_temp
+    - dataset
+  workload_feature_keys: []
+defaults:
+  sampling_temp: "0.15"
+command:
+  argv:
+    - python
+    - /workspace/third_parties/ProteinMPNN/protein_mpnn_run.py
+    - --pdb_path
+    - '{protein_path}'
+    - --out_folder
+    - '{out_folder}'
+    - --num_seq_per_target
+    - '{num_seq_per_target}'
+    - --sampling_temp
+    - '{sampling_temp}'
+    - --seed
+    - '37'
+    - --batch_size
+    - '{batch_size}'

@@ -1,0 +1,30 @@
+component: boltzgen_design
+dispatch_contract_ref: nextflow/modules/boltzgen_design.nf:RUN_BOLTZGEN_DESIGN
+main_script_signature: boltzgen
+common_axis_map:
+  output_sample_count: num_designs
+override_schema:
+  optional:
+    - diffusion_batch_size
+    - protocol
+    - dataset
+    - scaffold
+    - ligand
+defaults:
+  diffusion_batch_size: 1
+  protocol: protein-anything
+command:
+  argv:
+    - boltzgen
+    - run
+    - '{input_yaml}'
+    - --output
+    - '{output_dir}'
+    - --protocol
+    - '{protocol}'
+    - --steps
+    - design
+    - --num_designs
+    - '{num_designs}'
+    - --diffusion_batch_size
+    - '{diffusion_batch_size}'

@@ -1,0 +1,75 @@
+component: vina_gpu
+dispatch_contract_ref: nextflow/modules/vina_gpu.nf:RUN_VINA_GPU
+main_script_signature: /vina/AutoDock-Vina-GPU-2.1/AutoDock-Vina-GPU-2-1
+common_axis_map:
+  input_batch_size: batch_size
+override_schema:
+  optional:
+    - thread
+    - search_depth
+    - size_x
+    - size_y
+    - size_z
+    - batch_size
+    - dataset
+    - scaffold
+    - ligand
+cell_schema_version: 1
+cell_axis_subset:
+  - sample_id
+  - input_batch_size
+  - output_sample_count
+  - target_gpu_id
+  - thread
+  - search_depth
+  - size_x
+  - size_y
+  - size_z
+  - dataset
+modeling:
+  feature_schema:
+    - target_gpu_id
+    - thread
+    - search_depth
+    - size_x
+    - size_y
+    - size_z
+    - dataset
+  workload_feature_keys: []
+defaults:
+  thread: 8000
+  search_depth: 3
+  size_x: 25
+  size_y: 25
+  size_z: 25
+command:
+  argv:
+    - /vina/AutoDock-Vina-GPU-2.1/AutoDock-Vina-GPU-2-1
+    - --opencl_binary_path
+    - /vina/AutoDock-Vina-GPU-2.1
+    - --receptor
+    - '{receptor_path}'
+    - --ligand
+    - '{ligand_pdbqt_path}'
+    - --center_x
+    - '{center_x}'
+    - --center_y
+    - '{center_y}'
+    - --center_z
+    - '{center_z}'
+    - --size_x
+    - '{size_x}'
+    - --size_y
+    - '{size_y}'
+    - --size_z
+    - '{size_z}'
+    - --thread
+    - '{thread}'
+    - --search_depth
+    - '{search_depth}'
+    - --batch_size
+    - '{batch_size}'
+    - --sample_name
+    - '{sample_name}'
+    - --workdir
+    - '{workdir}'

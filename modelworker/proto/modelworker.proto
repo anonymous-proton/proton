@@ -1,0 +1,179 @@
+syntax = "proto3";
+
+package modelworker.v1;
+
+message Empty {}
+
+message HealthRequest {
+  bool readiness = 1;
+}
+
+message HealthResponse {
+  bool ok = 1;
+  string message = 2;
+}
+
+message Capabilities {
+  string worker_id = 1;
+  string model_name = 2;
+  string model_version = 3;
+
+  repeated string supported_buckets = 10;
+
+  int32 max_batch_size = 11;
+  int32 max_inflight_batches = 12;
+
+  bool supports_prepare_batch = 20;
+  bool supports_finalize_batch = 21;
+  bool supports_cancel_batch = 22;
+}
+
+message QueueStats {
+  int32 in_queue = 1;
+  int32 prepared_queue = 2;
+  int32 output_queue = 3;
+
+  int32 prepare_inflight = 4;
+  int32 execute_inflight = 5;
+  int32 finalize_inflight = 6;
+
+  int32 prepare_concurrency = 7;
+  int32 execute_concurrency = 8;
+  int32 finalize_concurrency = 9;
+  int32 item_concurrency = 10;
+}
+
+message WorkerStats {
+  string worker_id = 1;
+  QueueStats queues = 2;
+  ResidentBaselineSnapshot resident_baseline = 3;
+  bytes bootstrap_memory_summary_json = 4;
+}
+
+message ResidentBaselineSnapshot {
+  double resident_memory_mib = 1;
+  string resident_memory_source = 2;
+  double resident_baseline_collected_at = 3;
+  string resident_baseline_lifecycle_token = 4;
+  string resident_baseline_state = 5;
+}
+
+message RequestItem {
+  string request_id = 1;
+
+  bytes payload_json = 2;
+
+  map<string, string> params = 3;
+}
+
+message BatchTiming {
+  int64 queue_delay_us = 1;
+  int64 prepare_us = 2;
+  int64 execute_us = 3;
+  int64 finalize_us = 4;
+  int64 total_us = 5;
+}
+
+message ResponseItem {
+  string request_id = 1;
+  bool ok = 2;
+
+  bytes payload_json = 3;
+
+  string error_message = 4;
+}
+
+message BatchRequest {
+  uint64 batch_id = 1;
+
+  string bucket_id = 2;
+
+  map<string, string> params = 3;
+  repeated RequestItem requests = 4;
+}
+
+message BatchResponse {
+  uint64 batch_id = 1;
+  repeated ResponseItem responses = 2;
+  BatchTiming timing = 3;
+  DispatchAttribution attribution = 4;
+  bytes bootstrap_memory_summary_json = 5;
+  bytes dispatch_memory_window_json = 6;
+
+  bool ok = 10;
+  string error_message = 11;
+}
+
+message DispatchAttribution {
+  string worker_generation_token = 1;
+  int32 run_ordinal_in_generation = 2;
+  bool is_first_real_run = 3;
+}
+
+enum TaskState {
+  TASK_STATE_UNSPECIFIED = 0;
+  TASK_STATE_SUBMITTED = 1;
+  TASK_STATE_RUNNING = 2;
+  TASK_STATE_SUCCEEDED = 3;
+  TASK_STATE_FAILED = 4;
+  TASK_STATE_CANCELLED = 5;
+}
+
+message SubmitTaskRequest {
+  string nf_task_id = 1;
+  string component = 2;
+  string workdir = 3;
+  string command_script = 4;
+  string main_script = 5;
+  map<string, string> env = 6;
+  uint32 timeout_s = 7;
+}
+
+message SubmitTaskResponse {
+  string task_id = 1;
+}
+
+message GetTaskRequest {
+  string task_id = 1;
+}
+
+message GetTaskResponse {
+  string task_id = 1;
+  TaskState state = 2;
+  bool ok = 10;
+  int32 exit_code = 11;
+  string message = 12;
+  bytes manifest_json = 13;
+}
+
+message CancelTaskRequest {
+  string task_id = 1;
+}
+
+message CancelTaskResponse {
+  bool ok = 1;
+  string message = 2;
+}
+
+message CancelBatchRequest {
+  int32 batch_id = 1;
+}
+
+message CancelBatchResponse {
+  bool ok = 1;
+  string message = 2;
+}
+
+service ModelWorker {
+  rpc GetCapabilities(Empty) returns (Capabilities);
+  rpc InferBatch(BatchRequest) returns (BatchResponse);
+  rpc Health(HealthRequest) returns (HealthResponse);
+  rpc GetStats(Empty) returns (WorkerStats);
+  rpc CancelBatch(CancelBatchRequest) returns (CancelBatchResponse);
+}
+
+service Gateway {
+  rpc SubmitTask(SubmitTaskRequest) returns (SubmitTaskResponse);
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
+  rpc CancelTask(CancelTaskRequest) returns (CancelTaskResponse);
+}

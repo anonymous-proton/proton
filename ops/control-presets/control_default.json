@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "level": "level_a",
+  "components": [
+    "rfdiffusion",
+    "protenix",
+    "proteinmpnn",
+    "diffdock",
+    "esm"
+  ],
+  "limits": {
+    "max_loops": 20,
+    "max_wall_time_s": 172800
+  }
+}

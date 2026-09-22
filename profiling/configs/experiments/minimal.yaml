@@ -1,0 +1,35 @@
+experiments:
+  rfdiffusion:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1]
+    output_sample_count: [1]
+
+  diffdock:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1]
+    output_sample_count: [1]
+
+
+
+  proteinmpnn:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1]
+    output_sample_count: [1]
+
+  esm:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1]
+    output_sample_count: [1]
+
+
+  protenix:
+    sample_id: [1n0r_4de1]
+    quality: [medium]
+    input_batch_size: [1]
+    output_sample_count: [1]
+
+

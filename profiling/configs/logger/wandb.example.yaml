@@ -1,0 +1,8 @@
+runner:
+  wandb:
+    enabled: true
+    project: ${oc.env:WANDB_PROJECT,profiling}
+    entity: ${oc.env:WANDB_ENTITY,null}
+    mode: ${oc.env:WANDB_MODE,online}
+    tags: []
+    features: []

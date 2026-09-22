@@ -1,0 +1,56 @@
+component: esm
+dispatch_contract_ref: nextflow/modules/esm.nf:RUN_ESM
+main_script_signature: generate_variants.py
+common_axis_map:
+  input_batch_size: batch_size
+  output_sample_count: num_variants
+override_schema:
+  optional:
+    - model
+    - max_mutations
+    - top_k
+    - batch_size
+    - num_variants
+    - dataset
+    - scaffold
+    - ligand
+cell_schema_version: 1
+cell_axis_subset:
+  - sample_id
+  - input_batch_size
+  - output_sample_count
+  - target_gpu_id
+  - model
+  - max_mutations
+  - top_k
+  - dataset
+modeling:
+  feature_schema:
+    - target_gpu_id
+    - model
+    - max_mutations
+    - top_k
+    - dataset
+  workload_feature_keys: []
+defaults:
+  model: facebook/esm2_t33_650M_UR50D
+  max_mutations: 1
+  top_k: 5
+command:
+  argv:
+    - python
+    - /workspace/third_parties/ESM/generate_variants.py
+    - --ref_fasta_file
+    - '{ref_fasta}'
+    - --output_dir
+    - '{out_dir}'
+    - --batch_size
+    - '{batch_size}'
+    - --num_variants
+    - '{num_variants}'
+    - --max_mutations
+    - '{max_mutations}'
+    - --top_k
+    - '{top_k}'
+    - --model_name
+    - '{model}'
